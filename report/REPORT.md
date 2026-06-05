@@ -12,22 +12,19 @@ Lab đã hoàn thành cả phần code cá nhân và phần benchmark retrieval 
 
 **Core implementation:** `pytest tests/ -v` pass **42/42 tests**.
 
-**Corpus nhóm:** 9 tài liệu Markdown trong `extra_data/01` đến `extra_data/09`, domain Vinpearl travel assistant / resort recommendation. File `extra_data/10_multilingual_itinerary_retrieval_queries_vi_en.md` được dùng làm nguồn thiết kế query, không index vào vector store để tránh leak đáp án.
+**Corpus nhóm:** 9 tài liệu technical docs trong `data/` (deep learning history, Gemini Live API, logical thinking / AI problem-solving, RAG design, vector store notes, retrieval notes, Python intro, customer support, chunking experiment). PDF được convert sang Markdown bằng `marker-pdf` (`pdf_to_md.py`) trước khi chunk. Tổng cộng index **351 chunks**.
 
-**Strategy cá nhân tốt nhất:** `RecursiveChunker(chunk_size=900)`.
+**Strategy cá nhân tốt nhất:** Custom `HeaderAwareChunker(max_chars=1000)` — chunk theo heading/section, fallback `RecursiveChunker` khi section vượt 1000 ký tự.
 
-**Local provider:** `all-MiniLM-L6-v2`, 384-dimensional embeddings.
-
-**Gemini provider:** `gemini-embedding-002`, 3072-dimensional embeddings.
+**Local provider:** `all-MiniLM-L6-v2`, 384-dimensional embeddings (backend duy nhất đã chạy benchmark; xem `report/benchmark_cache.json`).
 
 **Kết quả benchmark chính:**
 
 | Provider | Strategy | Top-1 Correct | Top-3 Relevant | Ghi chú |
 |----------|----------|---------------|----------------|---------|
-| Local `all-MiniLM-L6-v2` | Recursive `chunk_size=900` | 5 / 5 | 5 / 5 | Chạy trực tiếp qua `EmbeddingStore` |
-| Gemini `gemini-embedding-002` | Recursive `chunk_size=900` | 5 / 5 | 5 / 5 | Chạy batch + rate-limit do quota free tier |
+| Local `all-MiniLM-L6-v2` | Header-aware `max_chars=1000` | 5 / 5 | 5 / 5 | Chạy trực tiếp qua `EmbeddingStore` (`benchmark.py`) |
 
-**Kết luận chính:** Cả local và Gemini đều retrieve đúng 5/5 benchmark queries. Gemini vượt trội ở similarity đa ngôn ngữ Việt-Anh: các pair cross-language tăng từ khoảng `0.22-0.45` ở local lên `0.75-0.77` ở Gemini.
+**Kết luận chính:** Provider local retrieve đúng **5/5** benchmark queries ở top-1 và **5/5** top-3 relevant. Điểm top-1 dao động `0.6709`–`0.8213`: cao nhất ở câu hỏi vector store (chunk định nghĩa rõ ràng), thấp nhất ở câu MECE (nội dung tiếng Việt phân tán qua nhiều section trùng tiêu đề).
 
 ---
 
@@ -39,14 +36,14 @@ Lab đã hoàn thành cả phần code cá nhân và phần benchmark retrieval 
 > Hai text chunks có high cosine similarity khi vector embedding của chúng gần cùng hướng, nghĩa là chúng biểu diễn nội dung hoặc ý định ngữ nghĩa gần nhau. Điểm cao không nhất thiết là hai câu giống chữ, mà là chúng nói về cùng chủ đề, cùng intent, hoặc cùng loại nhu cầu.
 
 **Ví dụ HIGH similarity:**
-- Sentence A: A family needs a beach resort with kids activities and a large pool.
-- Sentence B: The resort is suitable for families with children, swimming pools, and nearby entertainment.
-- Tại sao tương đồng: Hai câu đều nói về nhu cầu nghỉ dưỡng gia đình, trẻ em, hồ bơi và giải trí.
+- Sentence A: A vector store keeps embeddings and retrieves the most similar chunks to a query.
+- Sentence B: A vector database indexes embedding vectors so you can fetch nearest neighbors for a search query.
+- Tại sao tương đồng: Hai câu đều mô tả vector store/database lưu embedding và truy hồi item gần nhất với query.
 
 **Ví dụ LOW similarity:**
-- Sentence A: A traveler needs a private villa in Phu Quoc for 12 guests.
-- Sentence B: A business traveler needs a city hotel in Bac Ninh for meetings.
-- Tại sao khác: Một câu nói về villa nghỉ dưỡng biển cho nhóm đông, câu còn lại nói về khách sạn công tác trong thành phố.
+- Sentence A: Recursive chunking splits text along natural boundaries like newlines.
+- Sentence B: The Transformer architecture relies on self-attention for sequence modeling.
+- Tại sao khác: Một câu nói về chiến lược chunking văn bản, câu còn lại nói về kiến trúc model deep learning — khác hẳn chủ đề.
 
 **Tại sao cosine similarity được ưu tiên hơn Euclidean distance cho text embeddings?**
 > Text embeddings thường quan trọng ở hướng vector hơn là độ dài tuyệt đối của vector. Cosine similarity đo mức cùng hướng nên ổn định hơn khi so sánh ý nghĩa văn bản, trong khi Euclidean distance dễ bị ảnh hưởng bởi magnitude.
@@ -78,11 +75,17 @@ Lab đã hoàn thành cả phần code cá nhân và phần benchmark retrieval 
 
 | # | Tên tài liệu | Nguồn | Số ký tự | Metadata đã gán |
 |---|--------------|-------|----------|-----------------|
-| 1 | Logical Thinking & Problem-Solving in AI | `data/logical_thinking_and_problem_solving_in_AI.pdf` -> `data/logical_thinking_and_problem_solving_in_AI.md` | 46,658 | `category=ai_problem_solving`, `language=vi`, `difficulty=intermediate`, `source=...` |
-| 2 | Lịch sử Deep Learning | `data/Lịch sử Deep Learning.pdf` -> `data/deep_learning_history.md` | 12,246 | `category=deep_learning_history`, `language=vi`, `difficulty=beginner`, `source=...` |
-| 3 | Gemini Live API Cookbook | `data/1765571134714.pdf` -> `data/gemini_live_api_cookbook.md` | 27,658 | `category=api_cookbook`, `language=en`, `difficulty=advanced`, `source=...` |
-| 4 | RAG System Design for an Internal Knowledge Assistant | `data/rag_system_design.md` | 2,391 | `category=rag_design`, `language=en`, `difficulty=intermediate`, `source=...` |
-| 5 | Vector Store Notes | `data/vector_store_notes.md` | 2,123 | `category=vector_store`, `language=en`, `difficulty=beginner`, `source=...` |
+| 1 | Logical Thinking & Problem-Solving in AI | `data/logical_thinking_and_problem_solving_in_AI.pdf` -> `data/logical_thinking_and_problem_solving_in_AI.md` | 46,658 | `category=ai_problem_solving`, `language=vi`, `difficulty=intermediate` |
+| 2 | Lịch sử Deep Learning | `data/Lịch sử Deep Learning.pdf` -> `data/deep_learning_history.md` | 12,246 | `category=deep_learning_history`, `language=vi`, `difficulty=beginner` |
+| 3 | Gemini Live API Cookbook | `data/1765571134714.pdf` -> `data/gemini_live_api_cookbook.md` | 27,658 | `category=api_cookbook`, `language=en`, `difficulty=advanced` |
+| 4 | RAG System Design | `data/rag_system_design.md` | 2,391 | `category=rag_design`, `language=en`, `difficulty=intermediate` |
+| 5 | Vector Store Notes | `data/vector_store_notes.md` | 2,123 | `category=vector_store`, `language=en`, `difficulty=beginner` |
+| 6 | Ghi chú Retrieval | `data/vi_retrieval_notes.md` | 1,667 | `category=retrieval`, `language=vi`, `difficulty=beginner` |
+| 7 | Python Intro | `data/python_intro.txt` | 1,944 | `category=programming`, `language=en`, `difficulty=beginner` |
+| 8 | Customer Support Playbook | `data/customer_support_playbook.txt` | 1,692 | `category=support`, `language=en`, `difficulty=beginner` |
+| 9 | Chunking Experiment Report | `data/chunking_experiment_report.md` | 1,987 | `category=chunking`, `language=en`, `difficulty=intermediate` |
+
+Tất cả `source` (đường dẫn file) và `title` được gán tự động khi index trong `benchmark.py`. Tài liệu 1–5 là nhóm chính, 6–9 bổ sung làm corpus đa chủ đề/distractor; doc 9 (chunking experiment) và doc 5 (vector store) là gold doc cho Q4/Q5.
 
 ### Metadata Schema
 
@@ -104,15 +107,15 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 | Tài liệu | Strategy | Chunk Count | Avg Length | Preserves Context? |
 |-----------|----------|-------------|------------|-------------------|
-| Logical Thinking & Problem-Solving in AI | FixedSizeChunker (`fixed_size`) | 52 | 897.3 | Trung bình: ổn về size nhưng có thể cắt ngang slide hoặc heading. |
+| Logical Thinking & Problem-Solving in AI | FixedSizeChunker (`fixed_size`) | 55 | 897.4 | Trung bình: ổn về size nhưng có thể cắt ngang slide hoặc heading. |
 | Logical Thinking & Problem-Solving in AI | SentenceChunker (`by_sentences`) | 92 | 504.7 | Khá tốt vì Markdown giữ câu và bullet sạch hơn text thô. |
 | Logical Thinking & Problem-Solving in AI | RecursiveChunker (`recursive`) | 58 | 802.5 | Tốt hơn fixed-size vì ưu tiên ranh giới xuống dòng/khoảng trắng. |
-| Lịch sử Deep Learning | FixedSizeChunker (`fixed_size`) | 14 | 874.7 | Có thể trộn nhiều model hoặc mốc lịch sử trong một chunk. |
+| Lịch sử Deep Learning | FixedSizeChunker (`fixed_size`) | 15 | 863.1 | Có thể trộn nhiều model hoặc mốc lịch sử trong một chunk. |
 | Lịch sử Deep Learning | SentenceChunker (`by_sentences`) | 16 | 764.4 | Tốt cho đoạn văn giải thích lịch sử và model. |
 | Lịch sử Deep Learning | RecursiveChunker (`recursive`) | 16 | 763.6 | Cân bằng tốt giữa độ dài và ngữ cảnh. |
-| Gemini Live API Cookbook | FixedSizeChunker (`fixed_size`) | 31 | 892.2 | Có thể cắt ngang code block hoặc step. |
+| Gemini Live API Cookbook | FixedSizeChunker (`fixed_size`) | 33 | 886.6 | Có thể cắt ngang code block hoặc step. |
 | Gemini Live API Cookbook | SentenceChunker (`by_sentences`) | 42 | 656.0 | Tạm ổn, nhưng API docs/code block không luôn là câu tự nhiên. |
-| Gemini Live API Cookbook | RecursiveChunker (`recursive`) | 40 | 611.9 | Tốt hơn fixed-size với tài liệu có heading, newline và code. |
+| Gemini Live API Cookbook | RecursiveChunker (`recursive`) | 44 | 623.0 | Tốt hơn fixed-size với tài liệu có heading, newline và code. |
 
 ### Strategy Của Tôi
 
@@ -172,11 +175,11 @@ class HeaderAwareChunker:
 | Tài liệu | Strategy | Chunk Count | Avg Length | Retrieval Quality? |
 |-----------|----------|-------------|------------|--------------------|
 | Logical Thinking & Problem-Solving in AI | best baseline: `recursive` | 58 | 802.5 | Tốt, nhưng chunk vẫn dài và đôi khi gom nhiều slide. |
-| Logical Thinking & Problem-Solving in AI | **của tôi: header-aware** | 206 | 224.5 | Tốt hơn cho heading/case study; query recommendation engine lên đúng top-1. |
+| Logical Thinking & Problem-Solving in AI | **của tôi: header-aware** | 206 | 224.5 | Tốt hơn cho heading/case study; query MECE (Q3) lên đúng top-1. |
 | Lịch sử Deep Learning | best baseline: `recursive` | 16 | 763.6 | Tốt, nhưng có thể gom nhiều kiến trúc trong một chunk. |
 | Lịch sử Deep Learning | **của tôi: header-aware** | 51 | 238.2 | Tốt hơn cho câu hỏi về từng model như Transformer/RNN/CNN. |
-| Gemini Live API Cookbook | best baseline: `recursive` | 40 | 611.9 | Tốt cho API docs, nhưng vẫn có thể cắt lẫn code/step. |
-| Gemini Live API Cookbook | **của tôi: header-aware** | 62 | 406.5 | Tốt hơn cho query theo `Create a Session`, `Step`, `Tool Use`, `VAD`. |
+| Gemini Live API Cookbook | best baseline: `recursive` | 44 | 623.0 | Tốt cho API docs, nhưng vẫn có thể cắt lẫn code/step. |
+| Gemini Live API Cookbook | **của tôi: header-aware** | 67 | 407.2 | Tốt hơn cho query theo `Create a Session`, `Step`, `Tool Use`, `VAD`. |
 
 ### So Sánh Với Thành Viên Khác
 
@@ -251,25 +254,29 @@ Chạy 5 benchmark queries của nhóm trên implementation cá nhân của bạ
 
 ### Benchmark Queries & Gold Answers (nhóm thống nhất)
 
-| # | Query | Gold Answer |
-|---|-------|-------------|
-| 1 | Vì sao logical thinking quan trọng trong dự án AI? | Logical thinking giúp xử lý vấn đề phức tạp, tối ưu nguồn lực, xác định đúng vấn đề và đảm bảo hiệu quả đầu tư trong dự án AI. |
-| 2 | AI Recommendation Engine không hoạt động ở chuỗi siêu thị V: kỳ vọng và thực tế doanh thu là gì? | Case study kỳ vọng tăng 25% doanh thu, nhưng thực tế chỉ tăng 3% sau khi đầu tư 2 tỷ VNĐ trong 6 tháng. |
-| 3 | Transformer xử lý dữ liệu tuần tự hiệu quả hơn RNN và LSTM nhờ cơ chế gì? | Transformer xử lý dữ liệu tuần tự hiệu quả hơn RNN/LSTM nhờ cơ chế Attention/Self-Attention. |
-| 4 | What message exchange phases are required to create a Gemini Live API WebSocket session? | Gemini Live API WebSocket session gồm các phase: Handshake, Setup, Session Loop và Termination. |
-| 5 | Live API có những tính năng nào cho voice agent? | Live API hỗ trợ Native Audio, Multilingual Support, Voice Activity Detection, Affective Dialog, Proactive Audio, Thinking, Tool Use, Audio Transcriptions và Speech-to-Speech Translation. |
+5 query này được định nghĩa trong `benchmark.py` (`QUERIES`) và chạy thật qua `EmbeddingStore` (provider local, header-aware chunking). Q1–Q3 dùng `search_with_filter` theo `category`; Q4–Q5 dùng `search` không filter.
+
+| # | Query | Gold Doc | Filter | Gold Answer |
+|---|-------|----------|--------|-------------|
+| Q1 | Lịch sử Deep Learning bắt đầu từ khi nào và ai là những người tiên phong? | `deep_learning_history` | `category=deep_learning_history` | Từ 1940s (McCulloch & Pitts); backprop 1986 Rumelhart; LeNet 1989 LeCun; Transformer 2017. |
+| Q2 | How do I create a live audio session with Gemini Live API and handle voice activity detection? | `gemini_live_api_cookbook` | `category=api_cookbook` | Dùng GenAI SDK `live_connect`, set audio modalities; VAD tự xử lý turn-taking. |
+| Q3 | MECE framework là gì và áp dụng như thế nào trong AI problem solving? | `logical_thinking` | `category=ai_problem_solving` | MECE = Mutually Exclusive Collectively Exhaustive, phân rã bài toán không trùng lặp, không bỏ sót. |
+| Q4 | What are the trade-offs between fixed-size chunking and recursive chunking for technical docs? | `chunking_experiment_report` | None | Fixed-size: đơn giản, có thể cắt câu; recursive: tôn trọng ranh giới, số chunk biến thiên. |
+| Q5 | What is a vector store and how does it support retrieval-augmented generation? | `vector_store_notes` | None | Vector store lưu embeddings, hỗ trợ semantic search; RAG lấy top-k chunks làm context cho LLM. |
 
 ### Kết Quả Của Tôi
 
-| # | Query | Top-1 Retrieved Chunk (tóm tắt) | Score | Relevant? | Agent Answer (tóm tắt) |
-|---|-------|--------------------------------|-------|-----------|------------------------|
-| 1 | Vì sao logical thinking quan trọng trong dự án AI? | `Logical Thinking` chunk 2: tư duy logic giúp xử lý vấn đề phức tạp, tối ưu nguồn lực, đảm bảo hiệu quả đầu tư. | 0.711 | Yes | Trả lời đúng: logical thinking giúp đảm bảo hiệu quả đầu tư và tăng tỷ lệ thành công. |
-| 2 | AI Recommendation Engine không hoạt động ở chuỗi siêu thị V: kỳ vọng và thực tế doanh thu là gì? | `Logical Thinking` chunk 6: case study đầu tư 2 tỷ VNĐ trong 6 tháng, chỉ tăng 3% thay vì 25%. | 0.713 | Yes | Trả lời đúng: kỳ vọng 25%, thực tế 3%. |
-| 3 | Transformer xử lý dữ liệu tuần tự hiệu quả hơn RNN và LSTM nhờ cơ chế gì? | `Lịch sử Deep Learning` chunk 16: Transformer hiệu quả hơn RNN/LSTM nhờ Attention. | 0.773 | Yes | Trả lời đúng: cơ chế Attention. |
-| 4 | What message exchange phases are required to create a Gemini Live API WebSocket session? | `Gemini Live API Cookbook` chunk 8: Create a Session, gồm Handshake, Setup, Session Loop, Termination. | 0.699 | Yes | Trả lời đúng: Handshake, Setup, Session Loop, Termination. |
-| 5 | Live API có những tính năng nào cho voice agent? | `Gemini Live API Cookbook` chunk 2: Overview về low-latency realtime voice/video interactions. Feature list nằm top-2. | 0.511 | Partial | Trả lời đủ feature nhờ top-2: Native Audio, Multilingual, VAD, Affective Dialog, Proactive Audio, Thinking, Tool Use, Audio Transcriptions, Speech-to-Speech Translation. |
+Nguồn: `report/benchmark_cache.json` / `report/benchmark_run.md` (run local, 2026-06-05 23:20).
 
-**Bao nhiêu queries trả về chunk relevant trong top-3?** 5 / 5
+| # | Query | Top-1 Retrieved Chunk (tóm tắt) | Score | Relevant? |
+|---|-------|--------------------------------|-------|-----------|
+| Q1 | Lịch sử Deep Learning bắt đầu từ khi nào…? | `deep_learning_history`: "# Các Papers Nổi Tiếng và Quan Trọng Trong Lịch Sử Deep Learning" | 0.7008 | Yes (top-3: 3/3) |
+| Q2 | How do I create a live audio session with Gemini Live API…? | `gemini_live_api_cookbook`: "## Overview — technical specs & implementation details for the Live API in Vertex AI" | 0.7217 | Yes (top-3: 3/3) |
+| Q3 | MECE framework là gì…? | `logical_thinking`: "## PHẦN I: FOUNDATION — Problem-Solving Framework trong AI và Kỹ thuật 5 Whys" | 0.6709 | Yes (top-3: 3/3) |
+| Q4 | Trade-offs between fixed-size and recursive chunking? | `chunking_experiment_report`: "## Fixed-Size Chunking — simple, predictable chunk counts…" | 0.7244 | Yes (top-3: 3/3) |
+| Q5 | What is a vector store and how does it support RAG? | `vector_store_notes`: "# Vector Store Notes — a database/storage layer to keep embeddings and retrieve most similar items" | 0.8213 | Yes (top-3: 3/3) |
+
+**Top-1 đúng:** 5 / 5. **Bao nhiêu queries trả về chunk relevant trong top-3?** 5 / 5.
 
 ---
 
@@ -286,13 +293,13 @@ Chạy 5 benchmark queries của nhóm trên implementation cá nhân của bạ
 
 ### Failure Analysis
 
-**Failure case:** Query 5 hỏi danh sách tính năng của Live API cho voice agent.
+**Failure case:** Q3 — "MECE framework là gì và áp dụng như thế nào trong AI problem solving?" (`category=ai_problem_solving`).
 
-**Điều xảy ra:** Top-1 là chunk `Overview`, còn danh sách feature đầy đủ nằm ở top-2. Agent vẫn trả lời đủ nhờ top-3 context, nhưng retrieval precision ở top-1 chưa tối ưu cho câu hỏi dạng liệt kê đầy đủ.
+**Điều xảy ra:** Top-1 đúng doc (`logical_thinking`, score 0.6709), nhưng cả top-1, top-2 và top-3 đều là **cùng một chunk trùng lặp** — đoạn `## PHẦN I: FOUNDATION — Problem-Solving Framework trong AI và Kỹ thuật 5 Whys` với score y hệt 0.6709. Top-3 không có diversity, lãng phí context window và không trả về nội dung MECE chi tiết hơn.
 
-**Nguyên nhân:** Query hỏi “những tính năng nào”, nhưng top-1 chỉ giới thiệu tổng quan Live API. Feature list là chunk ngay sau overview, có semantic rất gần nhưng score thấp hơn một chút. Đây là failure nhẹ về ranking, không phải hệ thống hoàn toàn retrieve sai.
+**Nguyên nhân:** Header-aware chunker tách section theo dòng heading, nhưng heading `PHẦN I: FOUNDATION` xuất hiện ở nhiều vị trí trong file Markdown (divider/agenda lặp), tạo ra nhiều chunk gần như giống nhau. Vì nội dung trùng nên cả 3 vector gần query như nhau → top-3 là 3 bản sao.
 
-**Đề xuất cải thiện:** Thêm metadata `section_title=Overview` hoặc `section_title=Features`, sau đó filter/rerank ưu tiên chunk có heading chứa `features`. Với câu hỏi dạng list, có thể tăng `top_k` từ 3 lên 5 hoặc merge các chunk liên tiếp cùng section trước khi đưa vào prompt.
+**Đề xuất cải thiện:** (1) Dedup chunk theo nội dung (hoặc hash) trước khi index để loại bản sao; (2) thêm metadata `section_title`/`chunk_index` rồi rerank ưu tiên chunk khác section; (3) với truy vấn khái niệm như MECE, gắn heading cha vào nội dung con để chunk định nghĩa MECE thực sự (không chỉ heading FOUNDATION) được xếp hạng cao hơn.
 
 ---
 
