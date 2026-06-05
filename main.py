@@ -9,8 +9,10 @@ from dotenv import load_dotenv
 from src.agent import KnowledgeBaseAgent
 from src.embeddings import (
     EMBEDDING_PROVIDER_ENV,
+    GEMINI_EMBEDDING_MODEL,
     LOCAL_EMBEDDING_MODEL,
     OPENAI_EMBEDDING_MODEL,
+    GeminiEmbedder,
     LocalEmbedder,
     OpenAIEmbedder,
     _mock_embed,
@@ -62,6 +64,13 @@ def demo_llm(prompt: str) -> str:
     return f"[DEMO LLM] Generated answer from prompt preview: {preview}..."
 
 
+def _optional_int_env(name: str) -> int | None:
+    value = os.getenv(name)
+    if value is None or not value.strip():
+        return None
+    return int(value)
+
+
 def run_manual_demo(question: str | None = None, sample_files: list[str] | None = None) -> int:
     files = sample_files or SAMPLE_FILES
     query = question or "Summarize the key information from the loaded files."
@@ -93,6 +102,14 @@ def run_manual_demo(question: str | None = None, sample_files: list[str] | None 
     elif provider == "openai":
         try:
             embedder = OpenAIEmbedder(model_name=os.getenv("OPENAI_EMBEDDING_MODEL", OPENAI_EMBEDDING_MODEL))
+        except Exception:
+            embedder = _mock_embed
+    elif provider == "gemini":
+        try:
+            embedder = GeminiEmbedder(
+                model_name=os.getenv("GEMINI_EMBEDDING_MODEL", GEMINI_EMBEDDING_MODEL),
+                output_dimensionality=_optional_int_env("GEMINI_EMBEDDING_DIMENSIONS"),
+            )
         except Exception:
             embedder = _mock_embed
     else:

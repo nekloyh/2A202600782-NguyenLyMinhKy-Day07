@@ -43,12 +43,26 @@ class SentenceChunker:
     Strip extra whitespace from each chunk.
     """
 
+    # Split *after* a sentence terminator that is followed by whitespace.
+    _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+")
+
     def __init__(self, max_sentences_per_chunk: int = 3) -> None:
         self.max_sentences_per_chunk = max(1, max_sentences_per_chunk)
 
     def chunk(self, text: str) -> list[str]:
-        # TODO: split into sentences, group into chunks
-        raise NotImplementedError("Implement SentenceChunker.chunk")
+        if not text or not text.strip():
+            return []
+
+        sentences = [s.strip() for s in self._SENTENCE_BOUNDARY.split(text.strip()) if s.strip()]
+        if not sentences:
+            return []
+
+        chunks: list[str] = []
+        size = self.max_sentences_per_chunk
+        for start in range(0, len(sentences), size):
+            group = sentences[start : start + size]
+            chunks.append(" ".join(group))
+        return chunks
 
 
 class RecursiveChunker:
@@ -57,6 +71,12 @@ class RecursiveChunker:
 
     Default separator priority:
         ["\n\n", "\n", ". ", " ", ""]
+
+    For each separator we split the text, then greedily merge neighbouring
+    pieces back together until adding the next piece would exceed chunk_size.
+    Any single piece that is still too large is recursively split with the
+    next separator in the list. The empty separator "" means a hard split on
+    raw characters and acts as the final fallback.
     """
 
     DEFAULT_SEPARATORS = ["\n\n", "\n", ". ", " ", ""]
@@ -66,12 +86,49 @@ class RecursiveChunker:
         self.chunk_size = chunk_size
 
     def chunk(self, text: str) -> list[str]:
-        # TODO: implement recursive splitting strategy
-        raise NotImplementedError("Implement RecursiveChunker.chunk")
+        if not text:
+            return []
+        chunks = self._split(text, self.separators)
+        return [c.strip() for c in chunks if c.strip()]
+
+    def _hard_split(self, text: str) -> list[str]:
+        return [text[i : i + self.chunk_size] for i in range(0, len(text), self.chunk_size)]
 
     def _split(self, current_text: str, remaining_separators: list[str]) -> list[str]:
-        # TODO: recursive helper used by RecursiveChunker.chunk
-        raise NotImplementedError("Implement RecursiveChunker._split")
+        # Base case: it already fits.
+        if len(current_text) <= self.chunk_size:
+            return [current_text] if current_text else []
+
+        # No separators left (or empty separator) -> hard character split.
+        if not remaining_separators:
+            return self._hard_split(current_text)
+
+        separator, *rest = remaining_separators
+        if separator == "":
+            return self._hard_split(current_text)
+        if separator not in current_text:
+            return self._split(current_text, rest)
+
+        pieces = current_text.split(separator)
+        chunks: list[str] = []
+        buffer = ""
+        for piece in pieces:
+            candidate = piece if not buffer else f"{buffer}{separator}{piece}"
+            if len(candidate) <= self.chunk_size:
+                buffer = candidate
+                continue
+
+            if buffer:
+                chunks.append(buffer)
+                buffer = ""
+            if len(piece) <= self.chunk_size:
+                buffer = piece
+            else:
+                chunks.extend(self._split(piece, rest))
+
+        if buffer:
+            chunks.append(buffer)
+        return chunks
 
 
 def _dot(a: list[float], b: list[float]) -> float:
@@ -86,13 +143,31 @@ def compute_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 
     Returns 0.0 if either vector has zero magnitude.
     """
-    # TODO: implement cosine similarity formula
-    raise NotImplementedError("Implement compute_similarity")
+    magnitude_a = math.sqrt(_dot(vec_a, vec_a))
+    magnitude_b = math.sqrt(_dot(vec_b, vec_b))
+    if magnitude_a == 0.0 or magnitude_b == 0.0:
+        return 0.0
+    return _dot(vec_a, vec_b) / (magnitude_a * magnitude_b)
 
 
 class ChunkingStrategyComparator:
     """Run all built-in chunking strategies and compare their results."""
 
     def compare(self, text: str, chunk_size: int = 200) -> dict:
-        # TODO: call each chunker, compute stats, return comparison dict
-        raise NotImplementedError("Implement ChunkingStrategyComparator.compare")
+        overlap = min(50, chunk_size // 2)
+        strategies = {
+            "fixed_size": FixedSizeChunker(chunk_size=chunk_size, overlap=overlap).chunk(text),
+            "by_sentences": SentenceChunker(max_sentences_per_chunk=3).chunk(text),
+            "recursive": RecursiveChunker(chunk_size=chunk_size).chunk(text),
+        }
+
+        comparison: dict = {}
+        for name, chunks in strategies.items():
+            count = len(chunks)
+            avg_length = (sum(len(c) for c in chunks) / count) if count else 0.0
+            comparison[name] = {
+                "count": count,
+                "avg_length": avg_length,
+                "chunks": chunks,
+            }
+        return comparison

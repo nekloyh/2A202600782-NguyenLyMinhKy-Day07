@@ -5,6 +5,7 @@ import math
 
 LOCAL_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+GEMINI_EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_PROVIDER_ENV = "EMBEDDING_PROVIDER"
 
 
@@ -56,6 +57,51 @@ class OpenAIEmbedder:
     def __call__(self, text: str) -> list[float]:
         response = self.client.embeddings.create(model=self.model_name, input=text)
         return [float(value) for value in response.data[0].embedding]
+
+
+class GeminiEmbedder:
+    """Gemini API-backed embedder using Google's genai SDK."""
+
+    def __init__(
+        self,
+        model_name: str = GEMINI_EMBEDDING_MODEL,
+        output_dimensionality: int | None = None,
+    ) -> None:
+        from google import genai
+
+        self.model_name = model_name
+        self.output_dimensionality = output_dimensionality
+        self._backend_name = (
+            model_name
+            if output_dimensionality is None
+            else f"{model_name}:{output_dimensionality}"
+        )
+        self.client = genai.Client()
+
+    def __call__(self, text: str) -> list[float]:
+        kwargs = {
+            "model": self.model_name,
+            "contents": text,
+        }
+        if self.output_dimensionality is not None:
+            from google.genai import types
+
+            kwargs["config"] = types.EmbedContentConfig(
+                output_dimensionality=self.output_dimensionality
+            )
+
+        response = self.client.models.embed_content(**kwargs)
+        embeddings = getattr(response, "embeddings", None)
+        if embeddings:
+            values = getattr(embeddings[0], "values", embeddings[0])
+            return [float(value) for value in values]
+
+        embedding = getattr(response, "embedding", None)
+        if embedding is not None:
+            values = getattr(embedding, "values", embedding)
+            return [float(value) for value in values]
+
+        raise ValueError("Gemini embedding response did not contain embeddings")
 
 
 _mock_embed = MockEmbedder()

@@ -78,10 +78,30 @@ PY
 export OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
 
+### 4) Tùy chọn: Gemini embedder
+
+```bash
+pip install google-genai
+export GEMINI_API_KEY=your-key-here
+python3 - <<'PY'
+from src import GeminiEmbedder
+embedder = GeminiEmbedder()
+print(embedder._backend_name)
+print(len(embedder("embedding smoke test")))
+PY
+```
+
+- Model mặc định cho lựa chọn này là `gemini-embedding-001`
+- Có thể đổi model hoặc output dimensionality bằng:
+```bash
+export GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+export GEMINI_EMBEDDING_DIMENSIONS=768
+```
+
 ### Quy tắc fallback
 
 - Nếu không chọn gì, lab dùng `_mock_embed`
-- Nếu chọn `local` hoặc `openai` nhưng setup thiếu, code sẽ tự fallback về `_mock_embed`
+- Nếu chọn `local`, `openai`, hoặc `gemini` nhưng setup thiếu, code sẽ tự fallback về `_mock_embed`
 - Có thể cấu hình qua `.env` mà không cần `source .env`
 - Script `main.py` chạy end-to-end và import public API từ package `src`
 
@@ -116,6 +136,22 @@ PY
 
 > Lưu ý: `OpenAIEmbedder` cần `OPENAI_API_KEY` hợp lệ trong môi trường hoặc `.env`.
 
+**Verify Gemini embedder**
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+from dotenv import load_dotenv
+from src import GeminiEmbedder
+
+load_dotenv(dotenv_path=Path(".env"), override=False)
+embedder = GeminiEmbedder()
+print(embedder._backend_name, len(embedder("embedding smoke test")))
+PY
+```
+
+> Lưu ý: `OpenAIEmbedder` và `GeminiEmbedder` cần API key hợp lệ trong môi trường hoặc `.env`.
+
 ---
 
 ## Cấu Trúc Thư Mục
@@ -128,10 +164,12 @@ PY
 │   ├── chunking.py       ← Chunking classes + similarity helper
 │   ├── store.py          ← EmbeddingStore
 │   ├── agent.py          ← KnowledgeBaseAgent
-│   └── ...               ← Các module nhỏ hơn
+│   ├── models.py         ← Document dataclass
+│   ├── embeddings.py     ← Mock / Local / OpenAI / Gemini embedders
+│   └── __init__.py       ← Public API của package
 ├── data/                  ← Tài liệu mẫu + tài liệu nhóm (.txt/.md)
 ├── tests/
-│   └── test_solution.py   ← Test suite (30+ tests)
+│   └── test_solution.py   ← Test suite (42 tests)
 ├── report/
 │   └── REPORT.md         ← Báo cáo (1 file/sinh viên)
 ├── docs/
