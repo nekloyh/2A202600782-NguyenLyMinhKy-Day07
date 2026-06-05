@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-06-05T23:20:41.779520",
+  "runs": [
+    {
+      "provider": "local",
+      "backend": "all-MiniLM-L6-v2",
+      "total_chunks": 351,
+      "corpus_stats": [
+        {
+          "file": "deep_learning_history",
+          "chunks": 51,
+          "avg_len": 238
+        },
+        {
+          "file": "gemini_live_api_cookbook",
+          "chunks": 67,
+          "avg_len": 407
+        },
+        {
+          "file": "logical_thinking",
+          "chunks": 206,
+          "avg_len": 224
+        },
+        {
+          "file": "rag_system_design",
+          "chunks": 6,
+          "avg_len": 396
+        },
+        {
+          "file": "vector_store_notes",
+          "chunks": 8,
+          "avg_len": 263
+        },
+        {
+          "file": "vi_retrieval_notes",
+          "chunks": 2,
+          "avg_len": 832
+        },
+        {
+          "file": "python_intro",
+          "chunks": 3,
+          "avg_len": 646
+        },
+        {
+          "file": "customer_support_playbook",
+          "chunks": 2,
+          "avg_len": 844
+        },
+        {
+          "file": "chunking_experiment_report",
+          "chunks": 6,
+          "avg_len": 329
+        }
+      ],
+      "query_results": [
+        {
+          "query_id": "Q1",
+          "query": "Lịch sử Deep Learning bắt đầu từ khi nào và ai là những người tiên phong?",
+          "gold_doc": "deep_learning_history",
+          "filter": {
+            "category": "deep_learning_history"
+          },
+          "top1_doc": "deep_learning_history",
+          "top1_score": 0.7008,
+          "top1_correct": true,
+          "top3_relevant": 3,
+          "top3": [
+            {
+              "rank": 1,
+              "doc_id": "deep_learning_history",
+              "score": 0.7008,
+              "preview": "# Các Papers Nổi Tiếng và Quan Trọng Trong Lịch Sử Deep Learning",
+              "relevant": true
+            },
+            {
+              "rank": 2,
+              "doc_id": "deep_learning_history",
+              "score": 0.6585,
+              "preview": "### Các mốc quan trọng:  - 1956: Cụm từ \"Artificial Intelligence\" lần đầu được đề cập tại hội nghị Dartmouth [1](#page-5-0) - 1957: Frank Rosenblatt g",
+              "relevant": true
+            },
+            {
+              "rank": 3,
+              "doc_id": "deep_learning_history",
+              "score": 0.6429,
+              "preview": "#### Contributions của Geoffrey Hinton  Geoffrey Hinton có nhiều đóng góp quan trọng được ghi nhận trong các papers:  - Backpropagation: Phát triển th",
+              "relevant": true
+            }
+          ]
+        },
+        {
+          "query_id": "Q2",
+          "query": "How do I create a live audio session with Gemini Live API and handle voice activity detection?",
+          "gold_doc": "gemini_live_api_cookbook",
+          "filter": {
+            "category": "api_cookbook"
+          },
+          "top1_doc": "gemini_live_api_cookbook",
+          "top1_score": 0.7217,
+          "top1_correct": true,
+          "top3_relevant": 3,
+          "top3": [
+            {
+              "rank": 1,
+              "doc_id": "gemini_live_api_cookbook",
+              "score": 0.7217,
+              "preview": "## Overview  This cookbook outlines the technical specifications and implementation details for the Gemini Live API in Vertex AI. The Live API is desi",
+              "relevant": true
+            },
+            {
+              "rank": 2,
+              "doc_id": "gemini_live_api_cookbook",
+              "score": 0.5718,
+              "preview": "### Choose a Gemini model  Select an appropriate model based on your interaction requirements. See Live API [Supported](https://docs.cloud.google.com/",
+              "relevant": true
+            },
+            {
+              "rank": 3,
+              "doc_id": "gemini_live_api_cookbook",
+              "score": 0.5548,
+              "preview": "## Send Audio  Implementing real-time audio requires strict adherence to sample rate specifications and careful buffer management to ensure low latenc",
+              "relevant": true
+            }
+          ]
+        },
+        {
+          "query_id": "Q3",
+          "query": "MECE framework là gì và áp dụng như thế nào trong AI problem solving?",
+          "gold_doc": "logical_thinking",
+          "filter": {
+            "category": "ai_problem_solving"
+          },
+          "top1_doc": "logical_thinking",
+          "top1_score": 0.6709,
+          "top1_correct": true,
+          "top3_relevant": 3,
+          "top3": [
+            {
+              "rank": 1,
+              "doc_id": "logical_thinking",
+              "score": 0.6709,
+              "preview": "## **PHẦN I: FOUNDATION**  Problem-Solving Framework trong AI và Kỹ thuật đặt câu hỏi 5 Whys",
+              "relevant": true
+            },
+            {
+              "rank": 2,
+              "doc_id": "logical_thinking",
+              "score": 0.6709,
+              "preview": "## **PHẦN I: FOUNDATION**  Problem-Solving Framework trong AI và Kỹ thuật đặt câu hỏi 5 Whys",
+              "relevant": true
+            },
+            {
+              "rank": 3,
+              "doc_id": "logical_thinking",
+              "score": 0.6709,
+              "preview": "## **PHẦN I: FOUNDATION**  Problem-Solving Framework trong AI và Kỹ thuật đặt câu hỏi 5 Whys",
+              "relevant": true
+            }
+          ]
+        },
+        {
+          "query_id": "Q4",
+          "query": "What are the trade-offs between fixed-size chunking and recursive chunking for technical docs?",
+          "gold_doc": "chunking_experiment_report",
+          "filter": null,
+          "top1_doc": "chunking_experiment_report",
+          "top1_score": 0.7244,
+          "top1_correct": true,
+          "top3_relevant": 3,
+          "top3": [
+            {
+              "rank": 1,
+              "doc_id": "chunking_experiment_report",
+              "score": 0.7244,
+              "preview": "## Fixed-Size Chunking  Fixed-size chunking was simple to implement and produced predictable chunk counts. It worked reasonably well for long technica",
+              "relevant": true
+            },
+            {
+              "rank": 2,
+              "doc_id": "chunking_experiment_report",
+              "score": 0.6604,
+              "preview": "## Purpose  This report summarizes a small experiment comparing fixed-size chunking, sentence-based chunking, and recursive chunking on internal docum",
+              "relevant": true
+            },
+            {
+              "rank": 3,
+              "doc_id": "chunking_experiment_report",
+              "score": 0.6448,
+              "preview": "## Conclusion  The experiment suggests that there is no universal best strategy, but recursive chunking is a strong default for mixed technical docume",
+              "relevant": true
+            }
+          ]
+        },
+        {
+          "query_id": "Q5",
+          "query": "What is a vector store and how does it support retrieval-augmented generation?",
+          "gold_doc": "vector_store_notes",
+          "filter": null,
+          "top1_doc": "vector_store_notes",
+          "top1_score": 0.8213,
+          "top1_correct": true,
+          "top3_relevant": 3,
+          "top3": [
+            {
+              "rank": 1,
+              "doc_id": "vector_store_notes",
+              "score": 0.8213,
+              "preview": "# Vector Store Notes  A vector store is a database or storage layer designed to keep embeddings and retrieve the most similar items to a query vector.",
+              "relevant": true
+            },
+            {
+              "rank": 2,
+              "doc_id": "vector_store_notes",
+              "score": 0.6209,
+              "preview": "3. **Store the vector and metadata** so records can be searched and filtered.",
+              "relevant": true
+            },
+            {
+              "rank": 3,
+              "doc_id": "vector_store_notes",
+              "score": 0.5364,
+              "preview": "## Common Risks  Vector stores are powerful, but retrieval is not magically correct. Poor chunking, low-quality embeddings, missing metadata, and weak",
+              "relevant": true
+            }
+          ]
+        }
+      ],
+      "top1_correct": 5,
+      "top3_relevant": 5
+    }
+  ]
+}
