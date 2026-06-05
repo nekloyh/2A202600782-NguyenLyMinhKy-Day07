@@ -327,7 +327,7 @@ def main() -> None:
 
     # GEMINI
     try:
-        print("\n── GEMINI (gemini-embedding-001) ──")
+        print("\n── GEMINI (gemini-embedding-002) ──")
         runs.append(run_benchmark("gemini", GeminiEmbedder(), docs, stats))
     except Exception as e:
         print(f"GEMINI FAILED: {e}")

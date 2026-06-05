@@ -18,14 +18,14 @@ Lab đã hoàn thành cả phần code cá nhân và phần benchmark retrieval 
 
 **Local provider:** `all-MiniLM-L6-v2`, 384-dimensional embeddings.
 
-**Gemini provider:** `gemini-embedding-001`, 3072-dimensional embeddings.
+**Gemini provider:** `gemini-embedding-002`, 3072-dimensional embeddings.
 
 **Kết quả benchmark chính:**
 
 | Provider | Strategy | Top-1 Correct | Top-3 Relevant | Ghi chú |
 |----------|----------|---------------|----------------|---------|
 | Local `all-MiniLM-L6-v2` | Recursive `chunk_size=900` | 5 / 5 | 5 / 5 | Chạy trực tiếp qua `EmbeddingStore` |
-| Gemini `gemini-embedding-001` | Recursive `chunk_size=900` | 5 / 5 | 5 / 5 | Chạy batch + rate-limit do quota free tier |
+| Gemini `gemini-embedding-002` | Recursive `chunk_size=900` | 5 / 5 | 5 / 5 | Chạy batch + rate-limit do quota free tier |
 
 **Kết luận chính:** Cả local và Gemini đều retrieve đúng 5/5 benchmark queries. Gemini vượt trội ở similarity đa ngôn ngữ Việt-Anh: các pair cross-language tăng từ khoảng `0.22-0.45` ở local lên `0.75-0.77` ở Gemini.
 

@@ -91,10 +91,10 @@ print(len(embedder("embedding smoke test")))
 PY
 ```
 
-- Model mặc định cho lựa chọn này là `gemini-embedding-001`
+- Model mặc định cho lựa chọn này là `gemini-embedding-002`
 - Có thể đổi model hoặc output dimensionality bằng:
 ```bash
-export GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+export GEMINI_EMBEDDING_MODEL=gemini-embedding-002
 export GEMINI_EMBEDDING_DIMENSIONS=768
 ```
 

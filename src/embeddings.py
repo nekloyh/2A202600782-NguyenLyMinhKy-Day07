@@ -5,7 +5,7 @@ import math
 
 LOCAL_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
-GEMINI_EMBEDDING_MODEL = "gemini-embedding-001"
+GEMINI_EMBEDDING_MODEL = "gemini-embedding-002"
 EMBEDDING_PROVIDER_ENV = "EMBEDDING_PROVIDER"
 
 
